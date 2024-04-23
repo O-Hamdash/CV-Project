@@ -5,6 +5,7 @@ from L1optimal_saliency_lpp import stabilize
 import argparse
 import os
 from os.path import join
+from face_tracking import get_landmarks_array
 
 
 fourcc_avi = cv.VideoWriter_fourcc(*'XVID')
@@ -61,12 +62,49 @@ def plot_trajectory(og, stb, out_path_plot):
 
 # Find the inter-frame transformations array F_transforms
 # updates F_transforms array inplace
-def get_inter_frame_transforms(cap, F_transforms, prev_gray):
+def get_inter_frame_transforms(cap, F_transforms, prev_gray, in_file):
     n_frames = F_transforms.shape[0]
+    landmarks_array = get_landmarks_array(in_file)
+    prev_nonempty = []
+    eyes_indices = [33, 133, 160, 144, 159, 145, 386, 385, 384, 398, 263, 362]
     for i in range(n_frames):
         # Detect feature points in previous frame (or 1st frame in 1st iteration)
-        prev_pts = cv.goodFeaturesToTrack(prev_gray, maxCorners=200, qualityLevel=0.01,
+        prev_pts_good_features = cv.goodFeaturesToTrack(prev_gray, maxCorners=200, qualityLevel=0.01,
                                           minDistance=30, blockSize=3)
+        
+
+        corners = np.int0(prev_pts_good_features) 
+  
+        for j in corners: 
+            x,y = j.ravel() 
+            cv.circle(prev_gray,(x,y),10,(255,0,0),-1) 
+        cv.imshow('frame', prev_gray)  
+       
+        k = cv.waitKey(25)  
+        if k == 27:  
+            break
+
+
+        prev_pts = landmarks_array[i]
+
+        # if len(prev_pts) > 0:
+        #     prev_nonempty = prev_pts
+        # else:
+        #     prev_pts = prev_nonempty
+        #     print("empty at", i)
+
+        #prev_pts = [prev_pts[j] for j in eyes_indices]
+
+        prev_pts = np.array(prev_pts, dtype=np.float32)
+
+        prev_pts = prev_pts.reshape(-1, 1, 2)
+
+        #prev_pts = np.concatenate((prev_pts_good_features, prev_pts))
+
+        prev_pts = prev_pts_good_features
+
+        print(i, len(prev_pts))
+
         # Read next frame
         success, curr = cap.read()
         # If there is no next frame, stream/video has ended
@@ -177,7 +215,7 @@ def main(args, in_file_path, out_file_path, fourcc):
     # Convert frame to grayscale for feature tracking using openCV
     prev_gray = cv.cvtColor(prev, cv.COLOR_BGR2GRAY)
     # Find the inter-frame transformations array F_transforms
-    get_inter_frame_transforms(cap, F_transforms, prev_gray)
+    get_inter_frame_transforms(cap, F_transforms, prev_gray, in_file_path)
     # Get stabilization transforms B_t by processing motion transition transforms F_t
     B_transforms = stabilize(F_transforms, prev.shape, True, None, crop_ratio, in_file=in_file_path)
     # Accumulate by right multiplication into C_trajectory

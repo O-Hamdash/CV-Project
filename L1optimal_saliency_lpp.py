@@ -171,8 +171,9 @@ def stabilize(F_transforms, frame_shape, first_window=True, prev_frame_Bt=None, 
 
 
     # Saliency Constraints
-    landmarks_array = get_landmarks_array(in_file)
-    print(landmarks_array)
+    
+    #landmarks_array = get_landmarks_array(in_file)
+    #print(landmarks_array)
 
 
 
