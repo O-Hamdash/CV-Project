@@ -18,6 +18,18 @@ def get_face_landmarks(frame):
     return salient_points
 
 
+def get_landmarks_array(in_file):
+    landmarks_array = []
+    cap = cv2.VideoCapture(in_file)
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            break
+        landmarks = get_face_landmarks(frame)
+        landmarks_array.append(landmarks)
+    
+    return landmarks_array
+
 
 def visualize_salient_points(in_file):
     cap = cv2.VideoCapture(in_file)
