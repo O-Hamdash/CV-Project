@@ -66,7 +66,7 @@ def get_inter_frame_transforms(cap, F_transforms, prev_gray):
     for i in range(n_frames):
         # Detect feature points in previous frame (or 1st frame in 1st iteration)
         prev_pts = cv.goodFeaturesToTrack(prev_gray, maxCorners=200, qualityLevel=0.01,
-                                          minDistance=20, blockSize=3)
+                                          minDistance=30, blockSize=3)
         # Read next frame
         success, curr = cap.read()
         # If there is no next frame, stream/video has ended
@@ -86,9 +86,6 @@ def get_inter_frame_transforms(cap, F_transforms, prev_gray):
         curr_pts = curr_pts[idx]
         # Find transformation matrix for full 6 DOF affine transform
         m, _ = cv.estimateAffine2D(curr_pts, prev_pts)  # will only work with OpenCV-3 or less
-        print("prev_pts=", prev_pts)
-        print("curr_pts=", curr_pts)
-        print("F_t=", m.T)
         # print(m.shape) >> (2, 3) since 6 DOF full affine transform
         # Add current transformation matrix $F_t$ to array
         # $F_t$ is a right multiplied homogeneous affine transform, last column is untouched
