@@ -1,7 +1,7 @@
 import numpy as np
 import cv2 as cv
 import matplotlib.pyplot as plt
-from L1optimal_lpp import stabilize
+from L1optimal_saliency_lpp import stabilize
 import argparse
 import os
 from os.path import join
@@ -179,7 +179,7 @@ def main(args, in_file_path, out_file_path, fourcc):
     # Find the inter-frame transformations array F_transforms
     get_inter_frame_transforms(cap, F_transforms, prev_gray)
     # Get stabilization transforms B_t by processing motion transition transforms F_t
-    B_transforms = stabilize(F_transforms, prev.shape, True, None, crop_ratio)
+    B_transforms = stabilize(F_transforms, prev.shape, True, None, crop_ratio, in_file=in_file_path)
     # Accumulate by right multiplication into C_trajectory
     # $C_{t + 1} = C_t x F_t$
     # Initialise camera trajectory as a copy since it would help with stealing index 0 and the shape of F itself

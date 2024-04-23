@@ -1,6 +1,6 @@
 import pulp as lpp
 import numpy as np
-
+from face_tracking import get_landmarks_array
 
 # Predefined weights, choice same as the one taken in the paper
 # "Auto-Directed Video Stabilization with Robust L1 Optimal Camera Paths"
@@ -89,7 +89,7 @@ def get_crop_window(im_shape, crop_ratio):
 # In the absence of pipelining this option is not needed
 # prev_frame_Bt is the stabilization transform from the last frame of the
 # previous window, which would be the frame preceding the first frame of the current window
-def stabilize(F_transforms, frame_shape, first_window=True, prev_frame_Bt=None, crop_ratio=0.8):
+def stabilize(F_transforms, frame_shape, first_window=True, prev_frame_Bt=None, crop_ratio=0.8, in_file=""):
     # Create lpp minimization problem object
     prob = lpp.LpProblem("stabilize", lpp.LpMinimize)
     # Get the number of frames in sequence to be stabilized
@@ -167,6 +167,16 @@ def stabilize(F_transforms, frame_shape, first_window=True, prev_frame_Bt=None, 
         prob += p[0, 3] == prev_frame_Bt[1, 0]
         prob += p[0, 4] == prev_frame_Bt[0, 1]
         prob += p[0, 5] == prev_frame_Bt[1, 1]
+
+
+
+    # Saliency Constraints
+    landmarks_array = get_landmarks_array(in_file)
+    print(landmarks_array)
+
+
+
+
     # Print formulation to a text file
     # prob.writeLP("formulation.lp")
     # Apply linear programming to look for optimal stabilization + re-targeting transform
