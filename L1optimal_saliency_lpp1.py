@@ -3,20 +3,12 @@ import numpy as np
 
 # Predefined weights, choice same as the one taken in the paper
 # "Auto-Directed Video Stabilization with Robust L1 Optimal Camera Paths"
-# First derivative weight
-w1 = 10
-# Second derivative weight
-w2 = 1
-# Third derivative weight
-w3 = 100
+
+# First, second and third derivative weights
+w = [10, 1, 100]
 # Dimension of 2D motion model considered
-# 3 --> Rotation and Translation only
-# 4 --> Adds scaling
-# 6 --> Full affine transform adds shear and aspect ratio
 N = 6
-# As described in the paper the affine/rotational terms are
-# weighted 100x more than the translational terms
-# Format for parameter vector (dx_t, dy_t, a_t, b_t, c_t, d_t)'
+
 # For 1st derivative
 c1 = [1, 1, 100, 100, 100, 100]
 # For 2nd derivative
@@ -24,23 +16,6 @@ c2 = c1
 # For 3rd derivative
 c3 = c1
 
-
-# A multiply matrices method needed to form constraints
-# for the lpp optimization problem, matrix multiples F_t and B_t
-# F_t --> 3x3 np array, p_t ---> 6x1 1d collection of lpp variables
-# Based on
-# F_t =
-# [a_t, c_t, 0]
-# [b_t, d_t, 0]
-# [dx_t, dy_t, 1]
-# B_t =
-# [p3, p5, 0]
-# [p4, p6, 0]
-# [p1, p2, 1]
-# F_t * B_t
-# [a_t * p3 + c_t * p4, a_t * p5 + c_t * p6, 0]
-# [b_t * p3 + d_t * p4, b_t * p5 + d_t * p6, 0]
-# [p1 + dx_t * p3 + dy_t * p4, p2 + dx_t * p5 + dy_t * p6, 1]
 def transform_product(F_t, p, t):
     product = [ p[t, 0] + F_t[2, 0] * p[t, 2] + F_t[2, 1] * p[t, 3],
                 p[t, 1] + F_t[2, 0] * p[t, 4] + F_t[2, 1] * p[t, 5],
@@ -52,8 +27,6 @@ def transform_product(F_t, p, t):
     return product
 
 
-# Takes im_shape, a tuple and
-# crop ratio, a float < 1.0
 def get_crop_window(im_shape, crop_ratio):
     # Get center of original frames
     img_ctr_x = round(im_shape[1] / 2)
@@ -78,16 +51,6 @@ def get_crop_window(im_shape, crop_ratio):
     return corner_points
 
 
-# Function that takes the number of frames $n$ and the frame pair transforms
-# $F_1, F_2, \ldots, F_n$ as input and returns the stabilized
-# camera trajectory parameters $\{p_t\}_{t=1}^{n}$
-# These stabilized parameters are a flattened version of the transforms $B_t$
-# Which can then be applied to stabilize trajectory
-# The first window variable checks if the window of frames being processed
-# for stabilization is the first among all the windows in case of pipelining
-# In the absence of pipelining this option is not needed
-# prev_frame_Bt is the stabilization transform from the last frame of the
-# previous window, which would be the frame preceding the first frame of the current window
 def stabilize(F_transforms, frame_shape, first_window=True, prev_frame_Bt=None, crop_ratio=0.8, in_file=""):
     # Create lpp minimization problem object
     prob = lpp.LpProblem("stabilize", lpp.LpMinimize)
@@ -105,9 +68,9 @@ def stabilize(F_transforms, frame_shape, first_window=True, prev_frame_Bt=None, 
     # Stabilization parameters for each frame, all positive
     p = lpp.LpVariable.dicts("p", ((i, j) for i in range(n_frames) for j in range(N)))
     # Construct objective to be minimized using e1, e2 and e3
-    prob += w1 * lpp.lpSum([e1[i, j] * c1[j] for i in range(n_frames) for j in range(N)]) + \
-            w2 * lpp.lpSum([e2[i, j] * c2[j] for i in range(n_frames) for j in range(N)]) + \
-            w3 * lpp.lpSum([e3[i, j] * c3[j] for i in range(n_frames) for j in range(N)])
+    prob += w[0] * lpp.lpSum([e1[i, j] * c1[j] for i in range(n_frames) for j in range(N)]) + \
+            w[1] * lpp.lpSum([e2[i, j] * c2[j] for i in range(n_frames) for j in range(N)]) + \
+            w[2] * lpp.lpSum([e3[i, j] * c3[j] for i in range(n_frames) for j in range(N)])
     # Apply smoothness constraints on the slack variables e1, e2 and e3 using params p
     for t in range(n_frames - 3):
         # Depending on in what form F_transforms come to us use raw p vectors to create smoothness constraints

@@ -2,10 +2,9 @@ import numpy as np
 import cv2 as cv
 import matplotlib.pyplot as plt
 from L1optimal_saliency_lpp import stabilize
-import argparse
 import os
 from os.path import join
-from face_tracking import get_landmarks_array
+from face_tracking import get_landmarks_array, visualize_salient_points
 
 
 fourcc_avi = cv.VideoWriter_fourcc(*'XVID')
@@ -95,13 +94,15 @@ def get_inter_frame_transforms(cap, F_transforms, prev_gray, in_file):
 
         #prev_pts = [prev_pts[j] for j in eyes_indices]
 
+        #if len(prev_pts) == 0:
+         #   prev_pts = prev_pts_good_features
+        #else:
         prev_pts = np.array(prev_pts, dtype=np.float32)
-
         prev_pts = prev_pts.reshape(-1, 1, 2)
 
         #prev_pts = np.concatenate((prev_pts_good_features, prev_pts))
 
-        prev_pts = prev_pts_good_features
+        #prev_pts = prev_pts_good_features
 
         print(i, len(prev_pts))
 
@@ -186,12 +187,13 @@ def write_output(cap, out, B_transforms, shape, crop_ratio):
 
 
 # Main function reads in the input, processes it and writes the output
-def main(args, in_file_path, out_file_path, fourcc):
+def main(in_file_path, out_file_path, fourcc):
     file = in_file_path
+    #visualize_salient_points(file)
     # Extract input file name sans extension
     in_name = file.split('/')[-1].split('.')[0]
     # crop_ratio = 0.7
-    crop_ratio = args.crop_ratio
+    crop_ratio = 0.7
     # Read input video
     cap = cv.VideoCapture(file)
     # Get frame count, possible apriori if reading a file
@@ -231,7 +233,7 @@ def main(args, in_file_path, out_file_path, fourcc):
     for i in range(n_frames):
         P_trajectory[i, :, :] = C_trajectory[i, :, :] @ B_transforms[i, :, :]
     # if the plotting camera trajectory flag is passed, plot trajectories
-    if args.trajPlot:
+    if True:
         # Starting coordinate (0, 0) in homogeneous system
         origin = np.array([0, 0, 1])
         # Evolution of coordinate of camera trajectory under original scheme
@@ -250,29 +252,7 @@ def main(args, in_file_path, out_file_path, fourcc):
 
 
 if __name__ == "__main__":
-    # Pass command line inputs for the stabilization procedure
-    parser = argparse.ArgumentParser()
-    # Add input file path, default type is string
-    parser.add_argument("-i", action="store", dest="file")
-    # Add output file path, default type is string
-    parser.add_argument("-o", action="store", dest="file_out")
-    # Crop ratio to avoid black corners creeping into the main stabilized video frame area
-    parser.add_argument("-crop-ratio", action="store", dest="crop_ratio", type=float)
-    # Boolean argument that is True if the flag --trajPlot is passed
-    parser.add_argument("--trajPlot", action="store_true")
-    # read cmd line arguments
-    args_read = parser.parse_args()
-    # in file path
-    in_file = args_read.file
-    out_path = args_read.file_out
-    # Extract input file name sans extension and vid type of either mp4 or avi
-    [in_name, vid_type] = in_file.split('/')[-1].split('.')
-    # Define the codec for output video
-    if vid_type == 'mp4':
-        fourcc = fourcc_mp4
-    elif vid_type == 'avi':
-        fourcc = fourcc_avi
-    else:
-        print("Unsupported video file type")
-        exit(-1)
-    main(args_read, in_file, out_path, fourcc)
+    in_file = "video_short3.mp4"
+    out_path = "video_short3_stab12.mp4"
+
+    main(in_file, out_path, fourcc_mp4)
