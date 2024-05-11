@@ -91,7 +91,7 @@ def process_video(input_path, output_path, codec):
     _, initial_frame = video_capture.read()
     initial_frame_gray = cv.cvtColor(initial_frame, cv.COLOR_BGR2GRAY)
     track_inter_frame_transformations(video_capture, transforms, initial_frame_gray, input_path)
-    stabilization_params = stabilize(transforms[:-1], initial_frame.shape, True, None, 0.7, input_path)  # exclude the last frame if not needed
+    stabilization_params = stabilize(transforms[:-1], initial_frame.shape, True, None, 0.7)  # exclude the last frame if not needed
     #trajectory = np.cumprod([np.eye(3), *transforms[:-1]], axis=0)  # exclude the last identity matrix if not needed
     #stabilized_trajectory = trajectory @ stabilization_params
     #plot_camera_trajectory(trajectory, stabilized_trajectory, join(os.path.dirname(output_path), 'plots', os.path.basename(input_path).split('.')[0]))
@@ -100,5 +100,5 @@ def process_video(input_path, output_path, codec):
     video_capture.release()
 
 if __name__ == "__main__":
-    process_video("video_short3.mp4", "video_short3_stab12.mp4", FOURCC_MP4)
+    process_video("face.mp4", "video_short3_stab12.mp4", FOURCC_MP4)
 
