@@ -2,7 +2,7 @@ import pulp as lpp
 import numpy as np
 
 # Predefined weights, choice same as the one taken in the paper
-# "Auto-Directed Video Stabilization with Robust L1 Optimal Camera Paths"
+# "Auto-Directed Video Stabilization with Robust L1 Optimal Camera Paths" 
 
 # First, second and third derivative weights
 w = [10, 1, 100]
